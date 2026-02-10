@@ -1,350 +1,67 @@
-import React from "react";
-import { useRegistration } from "./hooks/useRegistration";
-import RegistrationForm from "./components/RegistrationForm";
-import OTPVerificationForm from "./components/OTPVerificationForm";
-import UserDetailsForm from "./components/UserDetailsForm";
-import AddressForm from "./components/AddressForm";
-import AdUploadForm from "./components/AdUploadForm";
-import CompletionScreen from "./components/CompletionScreen";
-import JsonDataImporter from "./components/JsonDataImporter";
-import AdPlansForm from "./components/AdPlansForm";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  NavLink,
+} from "react-router-dom";
+import AdPostPage from "./pages/AdPostPage";
+import UsersPage from "./pages/UsersPage";
+import AddressPage from "./pages/AddressPage";
 
 function App() {
-  const {
-    step,
-    loading,
-    error,
-    successMessage,
-    otpFromServer,
-    registrationData,
-    setRegistrationData,
-    otpData,
-    setOtpData,
-    userDetails,
-    setUserDetails,
-    addressData,
-    setAddressData,
-    adListingData,
-    setAdListingData,
-    handleRegistration,
-    handleOTPVerification,
-    handleResendOTP,
-    handleUserDetailsSubmit,
-    handleAddressSubmit,
-    handleAdListingSubmit,
-    handleSkipAdListing,
-    uploadProgress,
-    handleFileUpload,
-    createdAdId,
-    adPlans,
-    handleAdPlansSubmit,
-  } = useRegistration();
-
-  const handleJsonImport = (importedData) => {
-    // Update registration data
-    if (importedData.registration) {
-      setRegistrationData((prev) => ({
-        ...prev,
-        ...importedData.registration,
-      }));
-    }
-
-    // Update user details
-    if (importedData.userDetails) {
-      setUserDetails((prev) => ({
-        ...prev,
-        ...importedData.userDetails,
-      }));
-    }
-
-    // Update address data
-    if (importedData.address) {
-      setAddressData((prev) => ({
-        ...prev,
-        ...importedData.address,
-      }));
-    }
-
-    // Update ad listing data
-    if (importedData.adlisting) {
-      setAdListingData((prev) => ({
-        ...prev,
-        ...importedData.adlisting,
-      }));
-    }
-  };
+  // Styles for NavLinks
+  const navItemStyles = ({ isActive }) =>
+    `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+      isActive
+        ? "bg-blue-600 text-white shadow-md"
+        : "text-gray-600 hover:bg-blue-50 hover:text-blue-600"
+    }`;
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* JSON Data Importer - Only show before completing registration */}
-        {step !== "complete" && (
-          <JsonDataImporter onImport={handleJsonImport} />
-        )}
+    <Router basename="/seed-site">
+      <div className="flex min-h-screen bg-gray-100">
+        {/* Sidebar */}
+        <aside className="w-64 bg-white border-r border-gray-200 fixed h-full">
+          <div className="p-6">
+            <h1 className="text-2xl font-bold text-blue-700 uppercase tracking-wider">
+              Seed Site
+            </h1>
+          </div>
 
-        {/* Success Message - Global */}
-        {successMessage && (
-          <div className="mb-6 max-w-2xl mx-auto">
-            <div className="p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-center">
-              <svg
-                className="w-5 h-5 mr-2"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              {successMessage}
+          <nav className="mt-4 px-4 space-y-2">
+            <NavLink to="/" className={navItemStyles}>
+              <span className="text-xl">📋</span>
+              <span className="font-medium">Register Ad</span>
+            </NavLink>
+
+            <NavLink to="/users" className={navItemStyles}>
+              <span className="text-xl">👥</span>
+              <span className="font-medium">Users List</span>
+            </NavLink>
+          </nav>
+
+          <div className="absolute bottom-0 w-full p-4 border-t">
+            <div className="text-xs text-gray-400 text-center">
+              v1.0.4 Build 2026
             </div>
           </div>
-        )}
+        </aside>
 
-        {/* Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center max-w-2xl mx-auto">
-            {/* Step 1: Register */}
-            <div
-              className={`flex flex-col items-center ${step !== "initial" ? "opacity-100" : "opacity-50"}`}
-            >
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  step !== "initial"
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-300 text-gray-600"
-                }`}
-              >
-                {step !== "initial" ? "✓" : "1"}
-              </div>
-              <span className="text-xs mt-2 font-medium">Register</span>
-            </div>
-
-            <div
-              className={`flex-1 h-1 mx-2 ${
-                step === "otp" ||
-                step === "userDetails" ||
-                step === "address" ||
-                step === "adlisting" ||
-                step === "complete"
-                  ? "bg-green-500"
-                  : "bg-gray-300"
-              }`}
-            ></div>
-
-            {/* Step 2: Verify */}
-            <div
-              className={`flex flex-col items-center ${
-                step === "otp" ||
-                step === "userDetails" ||
-                step === "address" ||
-                step === "adlisting" ||
-                step === "complete"
-                  ? "opacity-100"
-                  : "opacity-50"
-              }`}
-            >
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  step === "userDetails" ||
-                  step === "address" ||
-                  step === "adlisting" ||
-                  step === "complete"
-                    ? "bg-green-500 text-white"
-                    : step === "otp"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-300 text-gray-600"
-                }`}
-              >
-                {step === "userDetails" ||
-                step === "address" ||
-                step === "adlisting" ||
-                step === "complete"
-                  ? "✓"
-                  : "2"}
-              </div>
-              <span className="text-xs mt-2 font-medium">Verify</span>
-            </div>
-
-            <div
-              className={`flex-1 h-1 mx-2 ${
-                step === "userDetails" ||
-                step === "address" ||
-                step === "adlisting" ||
-                step === "complete"
-                  ? "bg-green-500"
-                  : "bg-gray-300"
-              }`}
-            ></div>
-
-            {/* Step 3: Profile */}
-            <div
-              className={`flex flex-col items-center ${
-                step === "userDetails" ||
-                step === "address" ||
-                step === "adlisting" ||
-                step === "complete"
-                  ? "opacity-100"
-                  : "opacity-50"
-              }`}
-            >
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  step === "address" ||
-                  step === "adlisting" ||
-                  step === "complete"
-                    ? "bg-green-500 text-white"
-                    : step === "userDetails"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-300 text-gray-600"
-                }`}
-              >
-                {step === "address" ||
-                step === "adlisting" ||
-                step === "complete"
-                  ? "✓"
-                  : "3"}
-              </div>
-              <span className="text-xs mt-2 font-medium">Profile</span>
-            </div>
-
-            <div
-              className={`flex-1 h-1 mx-2 ${
-                step === "address" ||
-                step === "adlisting" ||
-                step === "complete"
-                  ? "bg-green-500"
-                  : "bg-gray-300"
-              }`}
-            ></div>
-
-            {/* Step 4: Address */}
-            <div
-              className={`flex flex-col items-center ${
-                step === "address" ||
-                step === "adlisting" ||
-                step === "complete"
-                  ? "opacity-100"
-                  : "opacity-50"
-              }`}
-            >
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  step === "adlisting" || step === "complete"
-                    ? "bg-green-500 text-white"
-                    : step === "address"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-300 text-gray-600"
-                }`}
-              >
-                {step === "adlisting" || step === "complete" ? "✓" : "4"}
-              </div>
-              <span className="text-xs mt-2 font-medium">Address</span>
-            </div>
-
-            <div
-              className={`flex-1 h-1 mx-2 ${
-                step === "adlisting" || step === "complete"
-                  ? "bg-green-500"
-                  : "bg-gray-300"
-              }`}
-            ></div>
-
-            {/* Step 5: Ad Listing */}
-            <div
-              className={`flex flex-col items-center ${
-                step === "adlisting" || step === "complete"
-                  ? "opacity-100"
-                  : "opacity-50"
-              }`}
-            >
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  step === "complete"
-                    ? "bg-green-500 text-white"
-                    : step === "adlisting"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-300 text-gray-600"
-                }`}
-              >
-                {step === "complete" ? "✓" : "5"}
-              </div>
-              <span className="text-xs mt-2 font-medium">First Ad</span>
-            </div>
+        {/* Main Content */}
+        <main className="flex-1 ml-64 p-8">
+          <div className="max-w-5xl mx-auto">
+            <Routes>
+              <Route path="/" element={<AdPostPage />} />
+              <Route path="/users" element={<UsersPage />} />
+              <Route
+                path="/seed-site/user/addresses/:userId"
+                element={<AddressPage />}
+              />
+            </Routes>
           </div>
-        </div>
-
-        {/* Form Steps */}
-        {step === "initial" && (
-          <RegistrationForm
-            data={registrationData}
-            setData={setRegistrationData}
-            onSubmit={handleRegistration}
-            loading={loading}
-            error={error}
-          />
-        )}
-
-        {step === "otp" && (
-          <OTPVerificationForm
-            data={otpData}
-            setData={setOtpData}
-            onSubmit={handleOTPVerification}
-            onResend={handleResendOTP}
-            loading={loading}
-            error={error}
-            phone={registrationData.phone}
-            otpFromServer={otpFromServer}
-          />
-        )}
-
-        {step === "userDetails" && (
-          <UserDetailsForm
-            data={userDetails}
-            setData={setUserDetails}
-            onSubmit={handleUserDetailsSubmit}
-            loading={loading}
-            error={error}
-          />
-        )}
-
-        {step === "address" && (
-          <AddressForm
-            data={addressData}
-            setData={setAddressData}
-            onSubmit={handleAddressSubmit}
-            loading={loading}
-            error={error}
-          />
-        )}
-
-        {step === "adlisting" && (
-          <AdUploadForm
-            data={adListingData}
-            setData={setAdListingData}
-            onSubmit={handleAdListingSubmit}
-            onSkip={handleSkipAdListing}
-            loading={loading}
-            error={error}
-            uploadProgress={uploadProgress}
-            onFileUpload={handleFileUpload}
-          />
-        )}
-
-        {step === "adplans" && (
-          <AdPlansForm
-            adId={createdAdId}
-            plans={adPlans}
-            onSubmit={handleAdPlansSubmit}
-            loading={loading}
-            error={error}
-          />
-        )}
-
-        {step === "complete" && <CompletionScreen />}
+        </main>
       </div>
-    </div>
+    </Router>
   );
 }
 
