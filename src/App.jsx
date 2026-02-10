@@ -1,12 +1,8 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  NavLink,
-} from "react-router-dom";
+import { HashRouter as Router, Routes, Route, NavLink } from "react-router-dom";
 import AdPostPage from "./pages/AdPostPage";
 import UsersPage from "./pages/UsersPage";
 import AddressPage from "./pages/AddressPage";
+import AdsPage from "./pages/AdsPage";
 
 function App() {
   // Styles for NavLinks
@@ -18,7 +14,7 @@ function App() {
     }`;
 
   return (
-    <Router basename="/seed-site">
+    <Router>
       <div className="flex min-h-screen bg-gray-100">
         {/* Sidebar */}
         <aside className="w-64 bg-white border-r border-gray-200 fixed h-full">
@@ -38,6 +34,11 @@ function App() {
               <span className="text-xl">👥</span>
               <span className="font-medium">Users List</span>
             </NavLink>
+
+            <NavLink to="/ads" className={navItemStyles}>
+              <span className="text-xl">📢</span>
+              <span className="font-medium">Ads</span>
+            </NavLink>
           </nav>
 
           <div className="absolute bottom-0 w-full p-4 border-t">
@@ -53,6 +54,7 @@ function App() {
             <Routes>
               <Route path="/" element={<AdPostPage />} />
               <Route path="/users" element={<UsersPage />} />
+              <Route path="/ads" element={<AdsPage />} />
               <Route
                 path="/seed-site/user/addresses/:userId"
                 element={<AddressPage />}

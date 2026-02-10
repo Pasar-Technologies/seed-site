@@ -1,32 +1,77 @@
+// pages/UsersPage.jsx
 import { useEffect, useState } from "react";
 import useUserStore from "../store/useUserStore";
 import { MdDelete, MdLocationOn } from "react-icons/md";
-import ProfileOverlay from "../components/users/ProfileOverlay";
-import { useNavigate } from "react-router-dom";
+import UserProfileOverlay from "../components/users/UserProfileOverlay";
+import DeleteUserModal from "../components/users/DeleteUserModal";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 function UsersPage() {
   const navigate = useNavigate();
-  const { users, fetchAllUsers, loading } = useUserStore();
-  const [searchQuery, setSearchQuery] = useState("");
 
-  // State for the overlay
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(
+    () => searchParams.get("userId") ?? "",
+  );
+
+  const { users, fetchAllUsers, deleteUser, loading, deleteLoading } =
+    useUserStore();
+
+  // State for profile overlay
   const [selectedUser, setSelectedUser] = useState(null);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+
+  // State for delete modal
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     fetchAllUsers();
   }, [fetchAllUsers]);
 
-  // Logic to open overlay with specific user data
+  // Open profile overlay
   const handleUserClick = (user) => {
     setSelectedUser(user);
     setIsOverlayOpen(true);
+  };
+
+  // Open delete confirmation modal
+  const handleDeleteClick = (user, e) => {
+    e.stopPropagation();
+    setUserToDelete(user);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Confirm delete
+  const handleConfirmDelete = async (userId) => {
+    const result = await deleteUser(userId);
+
+    if (result.success) {
+      toast.success(`User "${userToDelete.fullName}" deleted successfully`, {
+        duration: 4000,
+        icon: "🗑️",
+      });
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
+    } else {
+      toast.error(result.error || "Failed to delete user", {
+        duration: 5000,
+      });
+    }
+  };
+
+  // Close delete modal
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setUserToDelete(null);
   };
 
   const filteredUsers =
     users?.filter((user) => {
       const searchStr = searchQuery.toLowerCase();
       return (
+        user._id?.toLowerCase().includes(searchStr) ||
         user.fullName?.toLowerCase().includes(searchStr) ||
         user.email?.toLowerCase().includes(searchStr) ||
         user.phone?.includes(searchStr)
@@ -42,12 +87,13 @@ function UsersPage() {
 
   return (
     <div className="max-w-5xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
-      {/* ... Header and Search Input stay the same ... */}
+      {/* Header and Search */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Registered Users</h2>
           <p className="text-sm text-gray-500">
-            Managing {filteredUsers.length} filtered results
+            Managing {filteredUsers.length}{" "}
+            {filteredUsers.length === 1 ? "user" : "users"}
           </p>
         </div>
 
@@ -65,6 +111,7 @@ function UsersPage() {
         </div>
       </div>
 
+      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -92,38 +139,49 @@ function UsersPage() {
                 >
                   <td
                     className="py-4 px-4 font-medium text-blue-600 cursor-pointer hover:underline"
-                    onClick={() => handleUserClick(user)} // Trigger overlay on name click
+                    onClick={() => handleUserClick(user)}
                   >
                     {user.fullName}
                   </td>
-                  <td className="py-4 px-4 text-gray-600">{user.email}</td>
+                  <td className="py-4 px-4 text-gray-600">
+                    {user.email || "N/A"}
+                  </td>
                   <td className="py-4 px-4 text-gray-600">
                     {user.phone || "N/A"}
                   </td>
-                  <td className="py-4 px-4 text-center space-x-2">
-                    <button
-                      onClick={() =>
-                        navigate(`/seed-site/user/addresses/${user._id}`)
-                      }
-                      className="text-xl text-gray-400 hover:text-blue-500 transition-colors"
-                    >
-                      <MdLocationOn />
-                    </button>
-                    <button
-                      onClick={() =>
-                        navigate(`/seed-site/user/addresses/${user._id}`)
-                      }
-                      className="text-xl text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      <MdDelete />
-                    </button>
+                  <td className="py-4 px-4 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() =>
+                          navigate(`/seed-site/user/addresses/${user._id}`)
+                        }
+                        className="text-xl text-gray-400 hover:text-blue-500 transition-colors p-1 rounded hover:bg-blue-50"
+                        title="View Addresses"
+                      >
+                        <MdLocationOn />
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteClick(user, e)}
+                        className="text-xl text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
+                        title="Delete User"
+                      >
+                        <MdDelete />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
                 <td colSpan="4" className="py-10 text-center text-gray-400">
-                  No users match your search "{searchQuery}"
+                  {searchQuery ? (
+                    <>
+                      No users match your search{" "}
+                      <span className="font-semibold">"{searchQuery}"</span>
+                    </>
+                  ) : (
+                    "No users found"
+                  )}
                 </td>
               </tr>
             )}
@@ -131,11 +189,20 @@ function UsersPage() {
         </table>
       </div>
 
-      {/* REUSABLE OVERLAY COMPONENT */}
-      <ProfileOverlay
+      {/* Profile Overlay */}
+      <UserProfileOverlay
         user={selectedUser}
         isOpen={isOverlayOpen}
         onClose={() => setIsOverlayOpen(false)}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteUserModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+        user={userToDelete}
+        loading={deleteLoading} // ✅ Pass loading state
       />
     </div>
   );

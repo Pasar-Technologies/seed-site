@@ -1,8 +1,12 @@
 import React from "react";
 
 const AdUploadForm = ({
-  data,
-  setData,
+  adListingData,
+  setAdListingData,
+  stockAdData,
+  setStockAdData,
+  selectedAdType,
+  setSelectedAdType,
   onSubmit,
   onSkip,
   onFileUpload,
@@ -10,21 +14,75 @@ const AdUploadForm = ({
   loading,
   error,
 }) => {
-  const PRODUCT_TYPES = ["product", "service"];
+  const PRODUCT_TYPES = ["goods", "service"];
   const STOCK_TYPES = ["fmcg", "nonFmcg"];
+  const UNITS = [
+    "Gram",
+    "Kg",
+    "Ltr",
+    "Ml",
+    "Pkt",
+    "Pcs",
+    "Box",
+    "Dzn",
+    "Nos",
+    "Pair",
+    "Mtr",
+    "Ft",
+    "SqFt",
+    "Roll",
+    "Bndl",
+  ];
+
+  // Get current data based on selected ad type
+  const currentData =
+    selectedAdType === "adlisting" ? adListingData : stockAdData;
+  const setCurrentData =
+    selectedAdType === "adlisting" ? setAdListingData : setStockAdData;
 
   const handleChange = (e) => {
-    setData({ ...data, [e.target.name]: e.target.value });
+    setCurrentData({ ...currentData, [e.target.name]: e.target.value });
   };
 
   const handleBudgetChange = (field, value) => {
-    setData({
-      ...data,
-      budget: {
-        ...data.budget,
-        [field]: value,
-      },
-    });
+    if (selectedAdType === "adlisting") {
+      setAdListingData({
+        ...adListingData,
+        budget: {
+          ...adListingData.budget,
+          [field]: value,
+        },
+      });
+    }
+  };
+
+  const handleStockPriceChange = (index, field, value) => {
+    if (selectedAdType === "stockad") {
+      const newStockPrices = [...stockAdData.stockPrices];
+      if (!newStockPrices[index]) {
+        newStockPrices[index] = { moq: "", price: "" };
+      }
+      newStockPrices[index][field] = value;
+      setStockAdData({ ...stockAdData, stockPrices: newStockPrices });
+    }
+  };
+
+  const addStockPrice = () => {
+    if (selectedAdType === "stockad" && stockAdData.stockPrices.length < 3) {
+      setStockAdData({
+        ...stockAdData,
+        stockPrices: [...stockAdData.stockPrices, { moq: "", price: "" }],
+      });
+    }
+  };
+
+  const removeStockPrice = (index) => {
+    if (selectedAdType === "stockad" && stockAdData.stockPrices.length > 1) {
+      const newStockPrices = stockAdData.stockPrices.filter(
+        (_, i) => i !== index,
+      );
+      setStockAdData({ ...stockAdData, stockPrices: newStockPrices });
+    }
   };
 
   const handleFileChange = (e, type, index = null) => {
@@ -36,26 +94,21 @@ const AdUploadForm = ({
     e.preventDefault();
 
     // Validate based on ad type
-    if (data.adType === "adlisting") {
-      const minBudget = parseFloat(data.budget.min);
-      const maxBudget = parseFloat(data.budget.max);
+    if (selectedAdType === "adlisting") {
+      const minBudget = parseFloat(adListingData.budget.min);
+      const maxBudget = parseFloat(adListingData.budget.max);
 
       if (minBudget > maxBudget) {
         alert("Minimum budget cannot be greater than maximum budget");
         return;
       }
-    } else if (data.adType === "stockad") {
-      const mrp = parseFloat(data.mrp);
-      const sellingPrice = parseFloat(data.sellingPrice);
-
-      if (sellingPrice > mrp) {
-        alert("Selling price cannot be greater than MRP");
-        return;
-      }
-
-      // Validate stockExp for FMCG
-      if (data.stockType === "fmcg" && !data.stockExp) {
-        alert("Expiry date is required for FMCG products");
+    } else if (selectedAdType === "stockad") {
+      // Validate stockPrices - at least 1 required
+      const validPrices = stockAdData.stockPrices.filter(
+        (sp) => sp.moq && sp.price,
+      );
+      if (validPrices.length === 0) {
+        alert("At least one stock price tier is required");
         return;
       }
     }
@@ -85,9 +138,8 @@ const AdUploadForm = ({
             Ad Type *
           </label>
           <select
-            name="adType"
-            value={data.adType}
-            onChange={handleChange}
+            value={selectedAdType}
+            onChange={(e) => setSelectedAdType(e.target.value)}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
@@ -95,7 +147,7 @@ const AdUploadForm = ({
             <option value="stockad">Stock Ad (Inventory)</option>
           </select>
           <p className="text-xs text-gray-500 mt-1">
-            {data.adType === "adlisting"
+            {selectedAdType === "adlisting"
               ? "For services or product requirements"
               : "For selling inventory/stock"}
           </p>
@@ -109,20 +161,43 @@ const AdUploadForm = ({
           <input
             type="text"
             name="title"
-            value={data.title}
+            value={currentData.title}
             onChange={handleChange}
             required
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder={
-              data.adType === "adlisting"
+              selectedAdType === "adlisting"
                 ? "What are you looking for?"
                 : "What are you selling?"
             }
           />
         </div>
 
+        {/* Category (Common for both) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Category *
+          </label>
+          <input
+            type="text"
+            name="category"
+            value={currentData.category}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder={
+              selectedAdType === "adlisting"
+                ? "e.g., house maid, driver, electrician, laptop, mobile"
+                : "e.g., beverages, electronics, clothing"
+            }
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Enter the specific category
+          </p>
+        </div>
+
         {/* Conditional Fields for Ad Listing */}
-        {data.adType === "adlisting" && (
+        {selectedAdType === "adlisting" && (
           <>
             {/* Product Type (Tabs) */}
             <div>
@@ -134,9 +209,11 @@ const AdUploadForm = ({
                   <button
                     key={type}
                     type="button"
-                    onClick={() => setData({ ...data, product: type })}
+                    onClick={() =>
+                      setAdListingData({ ...adListingData, product: type })
+                    }
                     className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                      data.product === type
+                      adListingData.product === type
                         ? "bg-blue-600 text-white shadow-md"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
@@ -146,7 +223,7 @@ const AdUploadForm = ({
                 ))}
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Choose whether you're looking for a product or service
+                Choose whether you're looking for a good or service
               </p>
             </div>
 
@@ -162,7 +239,7 @@ const AdUploadForm = ({
                   </label>
                   <input
                     type="number"
-                    value={data.budget.min}
+                    value={adListingData.budget.min}
                     onChange={(e) => handleBudgetChange("min", e.target.value)}
                     required
                     min="0"
@@ -177,7 +254,7 @@ const AdUploadForm = ({
                   </label>
                   <input
                     type="number"
-                    value={data.budget.max}
+                    value={adListingData.budget.max}
                     onChange={(e) => handleBudgetChange("max", e.target.value)}
                     required
                     min="0"
@@ -199,7 +276,7 @@ const AdUploadForm = ({
               </label>
               <select
                 name="budgetFrequency"
-                value={data.budgetFrequency}
+                value={adListingData.budgetFrequency}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -216,7 +293,7 @@ const AdUploadForm = ({
             </div>
 
             {/* Experience - Only for service type */}
-            {data.product === "service" && (
+            {adListingData.product === "service" && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Years of Experience Required (Optional)
@@ -224,7 +301,7 @@ const AdUploadForm = ({
                 <input
                   type="number"
                   name="experience"
-                  value={data.experience}
+                  value={adListingData.experience}
                   onChange={handleChange}
                   min="0"
                   step="0.5"
@@ -241,7 +318,7 @@ const AdUploadForm = ({
         )}
 
         {/* Conditional Fields for Stock Ad */}
-        {data.adType === "stockad" && (
+        {selectedAdType === "stockad" && (
           <>
             {/* Stock Type (Tabs) */}
             <div>
@@ -253,9 +330,11 @@ const AdUploadForm = ({
                   <button
                     key={type}
                     type="button"
-                    onClick={() => setData({ ...data, stockType: type })}
+                    onClick={() =>
+                      setStockAdData({ ...stockAdData, stockType: type })
+                    }
                     className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                      data.stockType === type
+                      stockAdData.stockType === type
                         ? "bg-blue-600 text-white shadow-md"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
@@ -277,7 +356,7 @@ const AdUploadForm = ({
               <input
                 type="text"
                 name="brandName"
-                value={data.brandName}
+                value={stockAdData.brandName}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -285,7 +364,7 @@ const AdUploadForm = ({
               />
             </div>
 
-            {/* MRP and Selling Price */}
+            {/* MRP and Unit */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -294,7 +373,7 @@ const AdUploadForm = ({
                 <input
                   type="number"
                   name="mrp"
-                  value={data.mrp}
+                  value={stockAdData.mrp}
                   onChange={handleChange}
                   required
                   min="0"
@@ -305,19 +384,22 @@ const AdUploadForm = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Selling Price (₹) *
+                  Unit *
                 </label>
-                <input
-                  type="number"
-                  name="sellingPrice"
-                  value={data.sellingPrice}
+                <select
+                  name="unit"
+                  value={stockAdData.unit}
                   onChange={handleChange}
                   required
-                  min="0"
-                  step="0.01"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Your selling price"
-                />
+                >
+                  <option value="">Select unit</option>
+                  {UNITS.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -329,78 +411,92 @@ const AdUploadForm = ({
               <input
                 type="date"
                 name="stockMfg"
-                value={data.stockMfg}
+                value={stockAdData.stockMfg}
                 onChange={handleChange}
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
-            {/* Stock Expiry Date - Only for FMCG */}
-            {data.stockType === "fmcg" && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Expiry Date *
-                </label>
-                <input
-                  type="date"
-                  name="stockExp"
-                  value={data.stockExp}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Required for FMCG products
-                </p>
-              </div>
-            )}
-
-            {/* Minimum Order Quantity */}
+            {/* Stock Expiry Date - Optional */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Minimum Order Quantity *
+                Expiry Date {stockAdData.stockType === "fmcg" && "*"}
               </label>
               <input
-                type="number"
-                name="minOrderQty"
-                value={data.minOrderQty}
+                type="date"
+                name="stockExp"
+                value={stockAdData.stockExp}
                 onChange={handleChange}
-                required
-                min="1"
-                step="1"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="e.g., 10 units"
               />
+              <p className="text-xs text-gray-500 mt-1">Optional field</p>
+            </div>
+
+            {/* Stock Prices (Dynamic - max 3) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Stock Prices * (At least 1 required, max 3)
+              </label>
+              {stockAdData.stockPrices.map((sp, index) => (
+                <div key={index} className="grid grid-cols-3 gap-2 mb-2">
+                  <div className="col-span-1">
+                    <input
+                      type="number"
+                      value={sp.moq}
+                      onChange={(e) =>
+                        handleStockPriceChange(index, "moq", e.target.value)
+                      }
+                      required
+                      min="1"
+                      step="1"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="MOQ"
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <input
+                      type="number"
+                      value={sp.price}
+                      onChange={(e) =>
+                        handleStockPriceChange(index, "price", e.target.value)
+                      }
+                      required
+                      min="0"
+                      step="0.01"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Price (₹)"
+                    />
+                  </div>
+                  <div className="col-span-1 flex gap-2">
+                    {index === stockAdData.stockPrices.length - 1 &&
+                      stockAdData.stockPrices.length < 3 && (
+                        <button
+                          type="button"
+                          onClick={addStockPrice}
+                          className="flex-1 bg-green-500 text-white py-2 px-2 rounded-lg hover:bg-green-600 transition"
+                        >
+                          +
+                        </button>
+                      )}
+                    {stockAdData.stockPrices.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeStockPrice(index)}
+                        className="flex-1 bg-red-500 text-white py-2 px-2 rounded-lg hover:bg-red-600 transition"
+                      >
+                        −
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
               <p className="text-xs text-gray-500 mt-1">
-                Minimum quantity a customer must order
+                Add price tiers based on minimum order quantity (MOQ)
               </p>
             </div>
           </>
         )}
-
-        {/* Category (Common for both) */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Category *
-          </label>
-          <input
-            type="text"
-            name="category"
-            value={data.category}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder={
-              data.adType === "adlisting"
-                ? "e.g., house maid, driver, electrician, laptop, mobile"
-                : "e.g., beverages, electronics, clothing"
-            }
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Enter the specific category
-          </p>
-        </div>
 
         {/* Description (Common for both) */}
         <div>
@@ -409,13 +505,13 @@ const AdUploadForm = ({
           </label>
           <textarea
             name="description"
-            value={data.description}
+            value={currentData.description}
             onChange={handleChange}
             required
             rows="4"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             placeholder={
-              data.adType === "adlisting"
+              selectedAdType === "adlisting"
                 ? "Describe what you're looking for in detail..."
                 : "Describe your stock/product in detail..."
             }
@@ -441,7 +537,7 @@ const AdUploadForm = ({
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
               <div className="text-center">
-                {data.media.video ? (
+                {currentData.media.video ? (
                   <span className="text-green-600 font-medium">
                     Video Uploaded ✓
                   </span>
@@ -465,9 +561,9 @@ const AdUploadForm = ({
                 key={i}
                 className="relative group aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden hover:bg-gray-100 transition"
               >
-                {data.media.images[i] ? (
+                {currentData.media.images[i] ? (
                   <img
-                    src={data.media.images[i]}
+                    src={currentData.media.images[i]}
                     alt={`Preview ${i + 1}`}
                     className="w-full h-full object-cover"
                   />

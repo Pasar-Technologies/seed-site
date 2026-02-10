@@ -24,7 +24,7 @@ export const cloudinaryService = {
     formData.append("folder", signatureData.folder);
 
     const response = await axios.post(
-      `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/upload`, // Note: /upload for general assets
+      `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/upload`,
       formData,
       {
         onUploadProgress: (progressEvent) => {

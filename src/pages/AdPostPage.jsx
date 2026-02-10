@@ -1,5 +1,6 @@
 import AdPlansForm from "../components/AdPlansForm";
 import AdUploadForm from "../components/AdUploadForm";
+import AddressForm from "../components/AddressForm";
 import CompletionScreen from "../components/CompletionScreen";
 import JsonDataImporter from "../components/JsonDataImporter";
 import OTPVerificationForm from "../components/OTPVerificationForm";
@@ -24,6 +25,10 @@ function AdPostPage() {
     setAddressData,
     adListingData,
     setAdListingData,
+    stockAdData,
+    setStockAdData,
+    selectedAdType,
+    setSelectedAdType,
     handleRegistration,
     handleOTPVerification,
     handleResendOTP,
@@ -60,13 +65,22 @@ function AdPostPage() {
       }));
     }
 
-    if (importedData.adlisting) {
+    // Handle ad data based on type
+    if (importedData.adType === "adlisting" && importedData.adlisting) {
+      setSelectedAdType("adlisting");
       setAdListingData((prev) => ({
         ...prev,
         ...importedData.adlisting,
       }));
+    } else if (importedData.adType === "stockad" && importedData.stockad) {
+      setSelectedAdType("stockad");
+      setStockAdData((prev) => ({
+        ...prev,
+        ...importedData.stockad,
+      }));
     }
   };
+
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 py-12 px-4">
       <div className="max-w-4xl mx-auto">
@@ -120,6 +134,7 @@ function AdPostPage() {
                 step === "userDetails" ||
                 step === "address" ||
                 step === "adlisting" ||
+                step === "adplans" ||
                 step === "complete"
                   ? "bg-green-500"
                   : "bg-gray-300"
@@ -133,6 +148,7 @@ function AdPostPage() {
                 step === "userDetails" ||
                 step === "address" ||
                 step === "adlisting" ||
+                step === "adplans" ||
                 step === "complete"
                   ? "opacity-100"
                   : "opacity-50"
@@ -143,6 +159,7 @@ function AdPostPage() {
                   step === "userDetails" ||
                   step === "address" ||
                   step === "adlisting" ||
+                  step === "adplans" ||
                   step === "complete"
                     ? "bg-green-500 text-white"
                     : step === "otp"
@@ -153,6 +170,7 @@ function AdPostPage() {
                 {step === "userDetails" ||
                 step === "address" ||
                 step === "adlisting" ||
+                step === "adplans" ||
                 step === "complete"
                   ? "✓"
                   : "2"}
@@ -165,6 +183,7 @@ function AdPostPage() {
                 step === "userDetails" ||
                 step === "address" ||
                 step === "adlisting" ||
+                step === "adplans" ||
                 step === "complete"
                   ? "bg-green-500"
                   : "bg-gray-300"
@@ -177,6 +196,7 @@ function AdPostPage() {
                 step === "userDetails" ||
                 step === "address" ||
                 step === "adlisting" ||
+                step === "adplans" ||
                 step === "complete"
                   ? "opacity-100"
                   : "opacity-50"
@@ -186,6 +206,7 @@ function AdPostPage() {
                 className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   step === "address" ||
                   step === "adlisting" ||
+                  step === "adplans" ||
                   step === "complete"
                     ? "bg-green-500 text-white"
                     : step === "userDetails"
@@ -195,6 +216,7 @@ function AdPostPage() {
               >
                 {step === "address" ||
                 step === "adlisting" ||
+                step === "adplans" ||
                 step === "complete"
                   ? "✓"
                   : "3"}
@@ -206,6 +228,7 @@ function AdPostPage() {
               className={`flex-1 h-1 mx-2 ${
                 step === "address" ||
                 step === "adlisting" ||
+                step === "adplans" ||
                 step === "complete"
                   ? "bg-green-500"
                   : "bg-gray-300"
@@ -217,6 +240,7 @@ function AdPostPage() {
               className={`flex flex-col items-center ${
                 step === "address" ||
                 step === "adlisting" ||
+                step === "adplans" ||
                 step === "complete"
                   ? "opacity-100"
                   : "opacity-50"
@@ -224,21 +248,29 @@ function AdPostPage() {
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  step === "adlisting" || step === "complete"
+                  step === "adlisting" ||
+                  step === "adplans" ||
+                  step === "complete"
                     ? "bg-green-500 text-white"
                     : step === "address"
                       ? "bg-blue-500 text-white"
                       : "bg-gray-300 text-gray-600"
                 }`}
               >
-                {step === "adlisting" || step === "complete" ? "✓" : "4"}
+                {step === "adlisting" ||
+                step === "adplans" ||
+                step === "complete"
+                  ? "✓"
+                  : "4"}
               </div>
               <span className="text-xs mt-2 font-medium">Address</span>
             </div>
 
             <div
               className={`flex-1 h-1 mx-2 ${
-                step === "adlisting" || step === "complete"
+                step === "adlisting" ||
+                step === "adplans" ||
+                step === "complete"
                   ? "bg-green-500"
                   : "bg-gray-300"
               }`}
@@ -247,21 +279,23 @@ function AdPostPage() {
             {/* Step 5: Ad Listing */}
             <div
               className={`flex flex-col items-center ${
-                step === "adlisting" || step === "complete"
+                step === "adlisting" ||
+                step === "adplans" ||
+                step === "complete"
                   ? "opacity-100"
                   : "opacity-50"
               }`}
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  step === "complete"
+                  step === "adplans" || step === "complete"
                     ? "bg-green-500 text-white"
                     : step === "adlisting"
                       ? "bg-blue-500 text-white"
                       : "bg-gray-300 text-gray-600"
                 }`}
               >
-                {step === "complete" ? "✓" : "5"}
+                {step === "adplans" || step === "complete" ? "✓" : "5"}
               </div>
               <span className="text-xs mt-2 font-medium">First Ad</span>
             </div>
@@ -314,8 +348,12 @@ function AdPostPage() {
 
         {step === "adlisting" && (
           <AdUploadForm
-            data={adListingData}
-            setData={setAdListingData}
+            adListingData={adListingData}
+            setAdListingData={setAdListingData}
+            stockAdData={stockAdData}
+            setStockAdData={setStockAdData}
+            selectedAdType={selectedAdType}
+            setSelectedAdType={setSelectedAdType}
             onSubmit={handleAdListingSubmit}
             onSkip={handleSkipAdListing}
             loading={loading}
