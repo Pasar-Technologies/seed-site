@@ -1,66 +1,66 @@
 import { HashRouter as Router, Routes, Route, NavLink } from "react-router-dom";
-import AdPostPage from "./pages/AdPostPage";
-import UsersPage from "./pages/UsersPage";
-import AddressPage from "./pages/AddressPage";
-import AdsPage from "./pages/AdsPage";
+import AdPostPage from "./features/registration/AdPostPage";
+import UsersPage from "./features/users/UsersPage";
+import AdsPage from "./features/ads/AdsPage";
+import AddressPage from "./features/address/AddressPage";
+
+const NAV_ITEMS = [
+  { to: "/", icon: "✦", label: "Register Ad" },
+  { to: "/users", icon: "◈", label: "Users" },
+  { to: "/ads", icon: "◉", label: "Ads" },
+];
 
 function App() {
-  // Styles for NavLinks
   const navItemStyles = ({ isActive }) =>
-    `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+    `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-150 ${
       isActive
-        ? "bg-blue-600 text-white shadow-md"
-        : "text-gray-600 hover:bg-blue-50 hover:text-blue-600"
+        ? "bg-white/10 text-white font-semibold"
+        : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
     }`;
 
   return (
     <Router>
-      <div className="flex min-h-screen bg-gray-100">
+      <div className="flex min-h-screen bg-slate-100">
         {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 fixed h-full">
-          <div className="p-6">
-            <h1 className="text-2xl font-bold text-blue-700 uppercase tracking-wider">
-              Seed Site
-            </h1>
+        <aside className="w-56 bg-slate-900 fixed h-full flex flex-col">
+          {/* Logo */}
+          <div className="px-5 py-6 border-b border-white/10">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-white font-bold text-sm">
+                P
+              </div>
+              <div>
+                <div className="text-white font-bold text-sm tracking-wide">Pasar</div>
+                <div className="text-slate-500 text-xs">Seed Site</div>
+              </div>
+            </div>
           </div>
 
-          <nav className="mt-4 px-4 space-y-2">
-            <NavLink to="/" className={navItemStyles}>
-              <span className="text-xl">📋</span>
-              <span className="font-medium">Register Ad</span>
-            </NavLink>
-
-            <NavLink to="/users" className={navItemStyles}>
-              <span className="text-xl">👥</span>
-              <span className="font-medium">Users List</span>
-            </NavLink>
-
-            <NavLink to="/ads" className={navItemStyles}>
-              <span className="text-xl">📢</span>
-              <span className="font-medium">Ads</span>
-            </NavLink>
+          {/* Nav */}
+          <nav className="flex-1 px-3 py-4 space-y-0.5">
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider px-4 mb-2">Menu</p>
+            {NAV_ITEMS.map(({ to, icon, label }) => (
+              <NavLink key={to} to={to} className={navItemStyles}>
+                <span className="text-base w-5 text-center">{icon}</span>
+                <span>{label}</span>
+              </NavLink>
+            ))}
           </nav>
 
-          <div className="absolute bottom-0 w-full p-4 border-t">
-            <div className="text-xs text-gray-400 text-center">
-              v1.0.4 Build 2026
-            </div>
+          {/* Footer */}
+          <div className="px-5 py-4 border-t border-white/10">
+            <p className="text-xs text-slate-600">v1.0.4 · 2026</p>
           </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 ml-64 p-8">
-          <div className="max-w-5xl mx-auto">
-            <Routes>
-              <Route path="/" element={<AdPostPage />} />
-              <Route path="/users" element={<UsersPage />} />
-              <Route path="/ads" element={<AdsPage />} />
-              <Route
-                path="/seed-site/user/addresses/:userId"
-                element={<AddressPage />}
-              />
-            </Routes>
-          </div>
+        <main className="flex-1 ml-56 min-h-screen">
+          <Routes>
+            <Route path="/" element={<AdPostPage />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/ads" element={<AdsPage />} />
+            <Route path="/seed-site/user/addresses/:userId" element={<AddressPage />} />
+          </Routes>
         </main>
       </div>
     </Router>
